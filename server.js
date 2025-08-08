@@ -14,10 +14,10 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
-// Rate limiting
+// Rate limiting with environment variable support
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes default
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 requests default
   message: 'יותר מדי בקשות מכתובת זו, אנא נסה שוב מאוחר יותר.'
 });
 app.use('/api/', limiter);
@@ -25,10 +25,11 @@ app.use('/api/', limiter);
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// File upload configuration
+// File upload configuration with environment variable support
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'public', 'uploads');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'public', 'uploads', 'logos');
+    const uploadPath = path.join(uploadDir, 'logos');
     fs.ensureDirSync(uploadPath);
     cb(null, uploadPath);
   },
@@ -40,7 +41,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { 
+    fileSize: parseInt(process.env.UPLOAD_MAX_SIZE) || 5 * 1024 * 1024 // 5MB default
+  },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());

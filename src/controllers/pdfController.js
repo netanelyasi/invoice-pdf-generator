@@ -84,13 +84,18 @@ class PDFController {
       // Render HTML
       const html = template(templateData);
 
-      // Generate PDF using Puppeteer
+      // Generate PDF using Puppeteer with environment variable support
       const isWindows = process.platform === 'win32';
+      const puppeteerArgs = process.env.PUPPETEER_ARGS 
+        ? process.env.PUPPETEER_ARGS.split(',')
+        : (isWindows ? [] : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']);
+      
       const launchOptions = {
-        headless: true,
-        args: isWindows
-          ? []
-          : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        headless: process.env.PUPPETEER_HEADLESS !== 'false',
+        args: puppeteerArgs,
+        ...(process.env.PUPPETEER_EXECUTABLE_PATH && { 
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH 
+        })
       };
 
       const browser = await puppeteer.launch(launchOptions);

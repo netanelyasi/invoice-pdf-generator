@@ -41,11 +41,13 @@ RUN npm ci --only=production
 # Copy app source
 COPY . .
 
-# Create uploads directory
+# Create required directories
 RUN mkdir -p public/uploads/logos
-
-# Create database directory
 RUN mkdir -p database
+RUN mkdir -p data
+
+# Create volumes for persistent data
+VOLUME ["/usr/src/app/data", "/usr/src/app/public/uploads"]
 
 # Expose port
 EXPOSE 3000
@@ -54,7 +56,9 @@ EXPOSE 3000
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
     && mkdir -p /home/pptruser/Downloads \
     && chown -R pptruser:pptruser /home/pptruser \
-    && chown -R pptruser:pptruser /usr/src/app
+    && chown -R pptruser:pptruser /usr/src/app \
+    && chmod 755 /usr/src/app/data \
+    && chmod 755 /usr/src/app/public/uploads
 
 # Switch to non-root user
 USER pptruser

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  invoice-pdf-generator:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DOMAIN=html2pdf.brainboxai.io
+      - PUPPETEER_HEADLESS=true
+      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu,--no-zygote
+      - DB_PATH=/app/data/invoices.db
+      - UPLOAD_MAX_SIZE=5242880
+      - ALLOWED_FILE_TYPES=jpeg,jpg,png,gif
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+    volumes:
+      # Persistent storage for database and uploads
+      - invoice_data:/app/data
+      - invoice_uploads:/app/public/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  invoice_data:
+    driver: local
+  invoice_uploads:
+    driver: local

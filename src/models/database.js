@@ -4,7 +4,8 @@ const fs = require('fs-extra');
 
 class Database {
   constructor() {
-    this.dbPath = path.join(__dirname, '..', '..', 'database', 'invoices.db');
+    // Support environment variable for database path
+    this.dbPath = process.env.DB_PATH || path.join(__dirname, '..', '..', 'database', 'invoices.db');
     this.db = null;
   }
 
