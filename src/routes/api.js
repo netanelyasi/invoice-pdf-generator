@@ -221,6 +221,55 @@ router.post('/html-to-pdf',
       }
 
       const { html, filename, options } = req.body;
+
+      // Ensure UTF-8 + Hebrew-ready HTML by injecting meta charset, Hebrew-capable fonts, and RTL when needed
+      const ensureHebrewSupport = (rawHtml) => {
+        if (!rawHtml || typeof rawHtml !== 'string') return rawHtml;
+
+        const hasHebrewText = /[\u0590-\u05FF]/.test(rawHtml);
+        const hasHeadTag = /<head[\s\S]*?>/i.test(rawHtml);
+        const hasMetaUTF8 = /<meta[^>]*charset\s*=\s*["']?utf-?8["']?/i.test(rawHtml);
+        const hasHebrewFont = /(Noto\s+Sans\s+Hebrew|Heebo)/i.test(rawHtml);
+        const hasHtmlTag = /<html[^>]*>/i.test(rawHtml);
+        const hasDirAttr = /<html[^>]*\sdir\s*=\s*['"][^'"]+['"]/i.test(rawHtml);
+        const hasLangAttr = /<html[^>]*\slang\s*=\s*['"][^'"]+['"]/i.test(rawHtml);
+
+        const fontLinks = `\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;600;700;900&family=Heebo:wght@300;400;600;700;900&display=swap" rel="stylesheet">`;
+        const fontStyle = `\n<style> body { font-family: 'Heebo','Noto Sans Hebrew','Arial Unicode MS','Segoe UI',Arial,sans-serif; } </style>`;
+        const rtlStyle = hasHebrewText ? `\n<style> html { direction: rtl; } body { direction: rtl; text-align: right; } </style>` : '';
+
+        let output = rawHtml;
+
+        // If no <head>, wrap with a minimal HTML skeleton optimized for Hebrew
+        if (!hasHeadTag) {
+          const htmlAttrs = hasHebrewText ? ` lang="he" dir="rtl"` : '';
+          return `<!DOCTYPE html><html${htmlAttrs}><head>${hasMetaUTF8 ? '' : '<meta charset="UTF-8">'}${hasHebrewFont ? '' : fontLinks + fontStyle}${rtlStyle}</head><body>${rawHtml}</body></html>`;
+        }
+
+        // Ensure meta charset UTF-8
+        if (!hasMetaUTF8) {
+          output = output.replace(/<head(\s*[^>]*)>/i, '<head$1>\n<meta charset="UTF-8">');
+        }
+
+        // Ensure Hebrew-capable fonts
+        if (!hasHebrewFont) {
+          output = output.replace(/<head(\s*[^>]*)>/i, `<head$1>${fontLinks}${fontStyle}`);
+        }
+
+        // If HTML tag exists and there is Hebrew text, ensure lang/dir hints
+        if (hasHebrewText && hasHtmlTag) {
+          if (!hasLangAttr) {
+            output = output.replace(/<html(\s*[^>]*)>/i, (m, attrs) => `<html lang="he"${attrs}>`);
+          }
+          if (!hasDirAttr) {
+            output = output.replace(/<html(\s*[^>]*)>/i, (m, attrs) => `<html dir="rtl"${attrs}>`);
+          }
+          // Additionally ensure RTL via CSS to override conflicting styles
+          output = output.replace(/<head(\s*[^>]*)>/i, `<head$1>${rtlStyle}`);
+        }
+
+        return output;
+      };
       
       console.log('🔄 Converting HTML to PDF...');
       console.log('📝 HTML length:', html.length);
@@ -245,11 +294,13 @@ router.post('/html-to-pdf',
       
       // Set UTF-8 encoding
       await page.setExtraHTTPHeaders({
-        'Accept-Charset': 'utf-8'
+        'Accept-Charset': 'utf-8',
+        'Accept-Language': 'he-IL,he;q=0.9,en;q=0.8'
       });
       
       // Add UTF-8 BOM and set content
-      const htmlWithBOM = '\ufeff' + html;
+      const preparedHtml = ensureHebrewSupport(html);
+      const htmlWithBOM = '\ufeff' + preparedHtml;
       await page.setContent(htmlWithBOM, { 
         waitUntil: ['load', 'networkidle0'],
         timeout: 30000
