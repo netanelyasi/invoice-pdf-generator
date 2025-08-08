@@ -67,14 +67,13 @@ router.post('/generate-pdf',
     // Generate PDF
     const pdfBuffer = await pdfController.generatePDF(templateType, data);
 
-    // Set response headers for PDF (sanitize filename for header)
-    const safeFilename = (data.invoiceNumber || Date.now()).toString()
-      .replace(/[^\w\-\.]/g, '_') // Replace non-alphanumeric chars with underscore
-      .substring(0, 50); // Limit length
+    // Set response headers for PDF (completely safe filename)
+    const timestamp = Date.now();
+    const safeFilename = `invoice-${timestamp}`;
     
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="invoice-${safeFilename}.pdf"`,
+      'Content-Disposition': `attachment; filename="${safeFilename}.pdf"`,
       'Content-Length': pdfBuffer.length,
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
@@ -85,10 +84,14 @@ router.post('/generate-pdf',
     res.end(pdfBuffer, 'binary');
 
   } catch (error) {
-    console.error('שגיאת API ביצירת PDF:', error);
+    console.error('🚨 PDF Generation Error:', error);
+    console.error('🚨 Error Message:', error.message);
+    console.error('🚨 Error Stack:', error.stack);
+    
+    // Send error response without Hebrew characters in headers
     res.status(500).json({
       success: false,
-      error: 'יצירת ה-PDF נכשלה',
+      error: 'PDF generation failed',
       message: error.message
     });
   }
@@ -203,6 +206,37 @@ router.post('/preview',
 router.get('/health', (req, res) => {
   res.json({ success: true, status: 'תקין', timestamp: new Date().toISOString(), service: 'מחולל חשבוניות PDF' });
 });
+
+// Simple Hebrew test endpoint
+router.post('/test-hebrew', 
+  bypassHealthCheck,
+  async (req, res) => {
+    try {
+      const testData = {
+        templateType: 'receipt',
+        invoiceNumber: 'TEST-001', // Safe filename
+        customer: { name: 'Test User Hebrew עברית', email: 'test@example.com' },
+        business: { name: 'Test Business עסק', phone: '123-456-7890' },
+        items: [{ description: 'שירות בדיקה', quantity: 1, rate: 100, amount: 100 }],
+        subtotal: 100,
+        total: 100,
+        currency: '₪'
+      };
+
+      console.log('🧪 Testing Hebrew PDF generation...');
+      const pdfBuffer = await pdfController.generatePDF(testData.templateType, testData);
+      
+      // Ultra-simple headers
+      res.set('Content-Type', 'application/pdf');
+      res.set('Content-Length', pdfBuffer.length.toString());
+      res.end(pdfBuffer);
+
+    } catch (error) {
+      console.error('🧪 Hebrew test error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
 
 // Debug endpoint for PDF generation
 router.post('/debug-pdf', 
