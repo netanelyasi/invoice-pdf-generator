@@ -4,9 +4,41 @@ const pdfController = require('../controllers/pdfController');
 const { body, validationResult } = require('express-validator');
 const fs = require('fs-extra');
 const path = require('path');
+const multer = require('multer');
 const { authenticatedRateLimit, bypassHealthCheck } = require('../middleware/auth');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
+
+// Configure multer for logo uploads
+const logoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', 'public', 'uploads', 'logos');
+    fs.ensureDirSync(uploadPath);
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const logoUpload = multer({
+  storage: logoStorage,
+  limits: { 
+    fileSize: parseInt(process.env.UPLOAD_MAX_SIZE) || 5 * 1024 * 1024 // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('רק קבצי תמונה מותרים (JPEG, PNG, GIF)'));
+    }
+  }
+});
 
 // PDF Generation endpoint - PROTECTED with API key
 router.post('/generate-pdf', 
@@ -214,6 +246,84 @@ router.post('/debug-pdf',
     } catch (error) {
       console.error('🔧 Debug PDF error:', error);
       res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+// Logo upload endpoint - PROTECTED
+router.post('/upload-logo', 
+  bypassHealthCheck,
+  logoUpload.single('logo'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'לא הועלה קובץ',
+          message: 'אנא בחר קובץ תמונה להעלאה'
+        });
+      }
+
+      // Get the file URL
+      const baseUrl = process.env.DOMAIN ? `https://${process.env.DOMAIN}` : `http://localhost:${process.env.PORT || 3000}`;
+      const logoUrl = `${baseUrl}/uploads/logos/${req.file.filename}`;
+
+      console.log(`✅ Logo uploaded: ${req.file.filename} (${req.file.size} bytes)`);
+
+      res.json({
+        success: true,
+        message: 'הלוגו הועלה בהצלחה',
+        logo: {
+          filename: req.file.filename,
+          originalName: req.file.originalname,
+          size: req.file.size,
+          url: logoUrl,
+          path: req.file.path
+        }
+      });
+
+    } catch (error) {
+      console.error('שגיאה בהעלאת לוגו:', error);
+      res.status(500).json({
+        success: false,
+        error: 'העלאת הלוגו נכשלה',
+        message: error.message
+      });
+    }
+  }
+);
+
+// Delete logo endpoint - PROTECTED
+router.delete('/logo/:filename',
+  bypassHealthCheck,
+  async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const uploadPath = process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', 'public', 'uploads', 'logos');
+      const filePath = path.join(uploadPath, filename);
+
+      if (await fs.pathExists(filePath)) {
+        await fs.remove(filePath);
+        console.log(`🗑️ Logo deleted: ${filename}`);
+        
+        res.json({
+          success: true,
+          message: 'הלוגו נמחק בהצלחה'
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: 'הלוגו לא נמצא'
+        });
+      }
+
+    } catch (error) {
+      console.error('שגיאה במחיקת לוגו:', error);
+      res.status(500).json({
+        success: false,
+        error: 'מחיקת הלוגו נכשלה',
+        message: error.message
+      });
     }
   }
 );
