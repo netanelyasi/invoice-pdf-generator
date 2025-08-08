@@ -39,10 +39,14 @@ router.post('/generate-pdf',
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="invoice-${data.invoiceNumber || Date.now()}.pdf"`,
-      'Content-Length': pdfBuffer.length
+      'Content-Length': pdfBuffer.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     });
 
-    res.send(pdfBuffer);
+    // Send PDF buffer directly without JSON wrapper
+    res.end(pdfBuffer, 'binary');
 
   } catch (error) {
     console.error('שגיאת API ביצירת PDF:', error);
@@ -163,6 +167,56 @@ router.post('/preview',
 router.get('/health', (req, res) => {
   res.json({ success: true, status: 'תקין', timestamp: new Date().toISOString(), service: 'מחולל חשבוניות PDF' });
 });
+
+// Debug endpoint for PDF generation
+router.post('/debug-pdf', 
+  bypassHealthCheck,
+  async (req, res) => {
+    try {
+      const testData = {
+        templateType: 'receipt',
+        customer: { name: 'Debug Test', email: 'debug@test.com' },
+        business: { name: 'Debug Business', phone: '123-456-7890' },
+        items: [{ description: 'Debug Item', quantity: 1, rate: 100, amount: 100 }],
+        subtotal: 100,
+        total: 100,
+        invoiceNumber: 'DEBUG-001'
+      };
+
+      console.log('🔧 Generating debug PDF...');
+      const pdfBuffer = await pdfController.generatePDF(testData.templateType, testData);
+      
+      console.log(`🔧 Debug PDF size: ${pdfBuffer.length} bytes`);
+      console.log(`🔧 Debug PDF first 20 bytes: ${pdfBuffer.slice(0, 20).toString('hex')}`);
+      
+      // Check if it starts with PDF header
+      const pdfHeader = pdfBuffer.slice(0, 4).toString();
+      console.log(`🔧 PDF header: ${pdfHeader}`);
+      
+      if (pdfHeader !== '%PDF') {
+        console.error('❌ PDF buffer does not start with %PDF header!');
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Invalid PDF generated',
+          header: pdfHeader,
+          size: pdfBuffer.length 
+        });
+      }
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="debug-test.pdf"',
+        'Content-Length': pdfBuffer.length
+      });
+      
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      console.error('🔧 Debug PDF error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
 
 // API documentation endpoint
 router.get('/docs', (req, res) => {

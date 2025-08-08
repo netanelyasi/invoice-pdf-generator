@@ -108,7 +108,7 @@ class PDFController {
         timeout: 30000
       });
 
-      // Generate PDF
+      // Generate PDF with proper options
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
@@ -117,11 +117,20 @@ class PDFController {
           right: '20px',
           bottom: '20px',
           left: '20px'
-        }
+        },
+        preferCSSPageSize: false,
+        displayHeaderFooter: false,
+        timeout: 30000
       });
 
       await browser.close();
 
+      // Validate PDF buffer
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        throw new Error('Generated PDF buffer is empty');
+      }
+
+      console.log(`✅ PDF generated successfully. Size: ${pdfBuffer.length} bytes`);
       return pdfBuffer;
 
     } catch (error) {
