@@ -9,7 +9,9 @@ services:
       - API_KEY=${API_KEY}
       - API_RATE_LIMIT_MAX=500
       - PUPPETEER_HEADLESS=true
-      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu,--no-zygote
+      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu,--no-zygote,--disable-web-security,--disable-features=VizDisplayCompositor
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+      - PUPPETEER_CACHE_DIR=/usr/src/app/.cache/puppeteer
       - DB_PATH=/usr/src/app/data/invoices.db
       - UPLOAD_MAX_SIZE=5242880
       - UPLOAD_DIR=/usr/src/app/public/uploads

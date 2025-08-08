@@ -1,7 +1,7 @@
 # Use the official Node.js image as base
 FROM node:18-bullseye-slim
 
-# Install necessary packages for Puppeteer and health checks
+# Install Google Chrome and necessary packages for Puppeteer
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -28,6 +28,23 @@ RUN apt-get update && apt-get install -y \
     libdrm2 \
     libxss1 \
     libgbm1 \
+    libxrandr2 \
+    libxss1 \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libxss1 \
+    libatspi2.0-0 \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -39,6 +56,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
+# Install Chrome for Puppeteer (ensure it's available)
+RUN npx puppeteer browsers install chrome
+
 # Copy app source
 COPY . .
 
@@ -46,6 +66,7 @@ COPY . .
 RUN mkdir -p public/uploads/logos
 RUN mkdir -p database
 RUN mkdir -p data
+RUN mkdir -p .cache/puppeteer
 
 # Create volumes for persistent data
 VOLUME ["/usr/src/app/data", "/usr/src/app/public/uploads"]
