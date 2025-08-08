@@ -309,6 +309,27 @@ router.post('/html-to-pdf',
       // Wait for fonts to load
       await page.evaluateHandle('document.fonts.ready');
 
+      // Ensure emoji render properly (Twemoji SVG fallback) to avoid missing glyph squares
+      try {
+        // Style emoji images to align with text metrics
+        await page.addStyleTag({ content: `img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-0.1em;}` });
+        // Load twemoji script from CDN and replace emoji with SVGs
+        await page.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js' });
+        await page.evaluate(() => {
+          if (window.twemoji) {
+            window.twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+          }
+        });
+        // Wait briefly for SVG assets to load
+        if (typeof page.waitForNetworkIdle === 'function') {
+          await page.waitForNetworkIdle({ timeout: 5000 }).catch(() => {});
+        } else {
+          await page.waitForTimeout(800);
+        }
+      } catch (e) {
+        console.warn('⚠️  Twemoji injection failed, continuing without emoji SVGs:', e?.message || e);
+      }
+
       // Generate PDF with options
       const pdfOptions = {
         format: options?.format || 'A4',
