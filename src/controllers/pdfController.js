@@ -175,12 +175,14 @@ class PDFController {
       // Customer information
       customer: {
         name: data.customer?.name || 'Customer Name',
-        address: data.customer?.address || '456 Customer Street',
-        city: data.customer?.city || 'Customer City',
-        state: data.customer?.state || 'State',
-        postalCode: data.customer?.postalCode || '67890',
-        email: data.customer?.email || 'customer@email.com',
-        phone: data.customer?.phone || '+1 (555) 987-6543'
+        // Do not inject address defaults so empty fields will be hidden by the template
+        address: data.customer?.address || '',
+        city: data.customer?.city || '',
+        state: data.customer?.state || '',
+        postalCode: data.customer?.postalCode || '',
+        // Show email/phone only when provided
+        email: data.customer?.email || '',
+        phone: data.customer?.phone || ''
       },
       
       // Items
