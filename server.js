@@ -104,10 +104,15 @@ db.initialize()
     console.log('מסד הנתונים אופסן בהצלחה');
     
     // Start server
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server starting...`);
+      console.log(`📊 NODE_ENV: ${process.env.NODE_ENV}`);
+      console.log(`🔌 PORT: ${PORT}`);
+      console.log(`🌍 Listening on 0.0.0.0:${PORT}`);
       console.log(`שרת יצירת ה-PDF לחשבוניות פועל על פורט ${PORT}`);
       console.log(`ממשק וובי: http://localhost:${PORT}`);
       console.log(`נקודת API: http://localhost:${PORT}/api/generate-pdf`);
+      console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
     });
   })
   .catch(err => {

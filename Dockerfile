@@ -64,5 +64,9 @@ RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
 # Switch to non-root user
 USER pptruser
 
+# Copy and setup startup script
+COPY start.sh /usr/src/app/
+RUN chmod +x /usr/src/app/start.sh
+
 # Start the application
-CMD ["npm", "start"]
+CMD ["./start.sh"]
