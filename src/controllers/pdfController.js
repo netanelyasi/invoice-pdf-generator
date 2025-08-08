@@ -85,12 +85,10 @@ class PDFController {
       // Prepare data with defaults
       const templateData = this.prepareTemplateData(data);
 
-      // Render HTML with UTF-8 BOM
-      const htmlContent = template(templateData);
-      const html = '\ufeff' + htmlContent; // Add UTF-8 BOM
+      // Render HTML
+      const html = template(templateData);
       
       console.log('📝 HTML generated, length:', html.length);
-      console.log('🔤 First 100 chars:', html.substring(0, 100));
 
       // Generate PDF using Puppeteer with environment variable support
       const isWindows = process.platform === 'win32';
@@ -115,16 +113,13 @@ class PDFController {
         'Accept-Charset': 'utf-8'
       });
       
-      // Set content with proper UTF-8 handling
+      // Set content
       await page.setContent(html, { 
         waitUntil: ['load', 'networkidle0'],
         timeout: 30000
       });
-      
-      // Wait for fonts to load
-      await page.evaluateHandle('document.fonts.ready');
 
-      // Generate PDF with single-page optimization
+      // Generate PDF
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
@@ -134,12 +129,9 @@ class PDFController {
           bottom: '20px',
           left: '20px'
         },
-        preferCSSPageSize: true,
+        preferCSSPageSize: false,
         displayHeaderFooter: false,
-        timeout: 30000,
-        width: '210mm',
-        height: '297mm',
-        pageRanges: '1'
+        timeout: 30000
       });
 
       await browser.close();

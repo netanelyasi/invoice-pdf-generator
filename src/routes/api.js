@@ -207,6 +207,151 @@ router.get('/health', (req, res) => {
   res.json({ success: true, status: 'תקין', timestamp: new Date().toISOString(), service: 'מחולל חשבוניות PDF' });
 });
 
+// Direct HTML to PDF conversion endpoint
+router.post('/html-to-pdf', 
+  bypassHealthCheck,
+  [
+    body('html').isString().notEmpty().withMessage('HTML content is required')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, errors: errors.array() });
+      }
+
+      const { html, filename, options } = req.body;
+      
+      console.log('🔄 Converting HTML to PDF...');
+      console.log('📝 HTML length:', html.length);
+
+      // Launch browser
+      const puppeteer = require('puppeteer');
+      const isWindows = process.platform === 'win32';
+      const puppeteerArgs = process.env.PUPPETEER_ARGS 
+        ? process.env.PUPPETEER_ARGS.split(',')
+        : (isWindows ? [] : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']);
+      
+      const launchOptions = {
+        headless: process.env.PUPPETEER_HEADLESS !== 'false',
+        args: puppeteerArgs,
+        ...(process.env.PUPPETEER_EXECUTABLE_PATH && { 
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH 
+        })
+      };
+
+      const browser = await puppeteer.launch(launchOptions);
+      const page = await browser.newPage();
+      
+      // Set UTF-8 encoding
+      await page.setExtraHTTPHeaders({
+        'Accept-Charset': 'utf-8'
+      });
+      
+      // Add UTF-8 BOM and set content
+      const htmlWithBOM = '\ufeff' + html;
+      await page.setContent(htmlWithBOM, { 
+        waitUntil: ['load', 'networkidle0'],
+        timeout: 30000
+      });
+      
+      // Wait for fonts to load
+      await page.evaluateHandle('document.fonts.ready');
+
+      // Generate PDF with options
+      const pdfOptions = {
+        format: options?.format || 'A4',
+        printBackground: true,
+        margin: options?.margin || {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        },
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        timeout: 30000,
+        pageRanges: '1',
+        ...options
+      };
+
+      const pdfBuffer = await page.pdf(pdfOptions);
+      await browser.close();
+
+      // Validate PDF
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        throw new Error('Generated PDF buffer is empty');
+      }
+
+      console.log(`✅ HTML converted to PDF. Size: ${pdfBuffer.length} bytes`);
+
+      // Send PDF
+      const safeFilename = filename ? filename.replace(/[^\w\-\.]/g, '_') : `html-pdf-${Date.now()}`;
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${safeFilename}.pdf"`,
+        'Content-Length': pdfBuffer.length
+      });
+      
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      console.error('🚨 HTML to PDF Error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'HTML to PDF conversion failed',
+        message: error.message
+      });
+    }
+  }
+);
+
+// Debug template rendering (returns HTML)
+router.post('/debug-template', 
+  bypassHealthCheck,
+  async (req, res) => {
+    try {
+      const { templateType, ...data } = req.body;
+      
+      console.log('🐛 Debug template rendering...');
+      console.log('🐛 Template type:', templateType);
+      console.log('🐛 Data keys:', Object.keys(data));
+      
+      // Use the same logic as generate-pdf
+      const templateData = pdfController.prepareTemplateData(data);
+      console.log('🐛 Prepared data keys:', Object.keys(templateData));
+      console.log('🐛 Business name:', templateData.business?.name);
+      console.log('🐛 Customer name:', templateData.customer?.name);
+      
+      // Load template
+      const path = require('path');
+      const fs = require('fs-extra');
+      const handlebars = require('handlebars');
+      
+      const templatePath = path.join(__dirname, '..', 'templates', `${templateType}.hbs`);
+      console.log('🐛 Template path:', templatePath);
+      
+      if (!await fs.pathExists(templatePath)) {
+        return res.status(404).json({ success: false, error: `Template not found: ${templateType}` });
+      }
+
+      const templateContent = await fs.readFile(templatePath, { encoding: 'utf8' });
+      const template = handlebars.compile(templateContent);
+      const html = template(templateData);
+      
+      console.log('🐛 Generated HTML length:', html.length);
+      
+      // Return HTML for inspection
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+
+    } catch (error) {
+      console.error('🐛 Debug template error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
 // Simple Hebrew test endpoint
 router.post('/test-hebrew', 
   bypassHealthCheck,
