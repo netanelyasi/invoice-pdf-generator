@@ -75,14 +75,22 @@ class PDFController {
         throw new Error(`Template not found: ${templateType}`);
       }
 
-      const templateContent = await fs.readFile(templatePath, 'utf8');
-      const template = handlebars.compile(templateContent);
+      // Read template with explicit UTF-8 encoding
+      const templateContent = await fs.readFile(templatePath, { encoding: 'utf8' });
+      const template = handlebars.compile(templateContent, {
+        noEscape: false,
+        strict: false
+      });
 
       // Prepare data with defaults
       const templateData = this.prepareTemplateData(data);
 
-      // Render HTML
-      const html = template(templateData);
+      // Render HTML with UTF-8 BOM
+      const htmlContent = template(templateData);
+      const html = '\ufeff' + htmlContent; // Add UTF-8 BOM
+      
+      console.log('📝 HTML generated, length:', html.length);
+      console.log('🔤 First 100 chars:', html.substring(0, 100));
 
       // Generate PDF using Puppeteer with environment variable support
       const isWindows = process.platform === 'win32';
@@ -102,11 +110,19 @@ class PDFController {
 
       const page = await browser.newPage();
       
-      // Set content and wait for load
+      // Set UTF-8 encoding and viewport
+      await page.setExtraHTTPHeaders({
+        'Accept-Charset': 'utf-8'
+      });
+      
+      // Set content with proper UTF-8 handling
       await page.setContent(html, { 
         waitUntil: ['load', 'networkidle0'],
         timeout: 30000
       });
+      
+      // Wait for fonts to load
+      await page.evaluateHandle('document.fonts.ready');
 
       // Generate PDF with proper options
       const pdfBuffer = await page.pdf({
