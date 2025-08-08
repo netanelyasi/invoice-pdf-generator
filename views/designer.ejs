@@ -7,16 +7,17 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
   <style>
-    body { background: #f6f7fb; }
-    .sidebar { height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
-    .block { background: #fff; border: 1px dashed #ced4da; border-radius: .5rem; padding: .75rem; margin-bottom: .75rem; cursor: grab; }
-    .canvas { min-height: 60vh; background: #fff; border: 2px dashed #adb5bd; border-radius: .5rem; padding: 1rem; }
-    .canvas .block { border-style: solid; cursor: grab; }
-    .drag-over { background: #f1f3f5; }
-    .toolbar { position: sticky; top: 56px; z-index: 1020; background: #fff; border-bottom: 1px solid #e9ecef; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
-    .toolbar .container, .toolbar .container-fluid { overflow-x: auto; }
-    .toolbar .input-group { direction: rtl; }
-    .code-preview { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space: pre; background: #1e1e1e; color: #e5e5e5; border-radius: .5rem; }
+  body { background: var(--bs-body-bg); color: var(--bs-body-color); }
+  .sidebar { height: calc(100vh - 56px); position: sticky; top: 56px; overflow-y: auto; }
+  .block { background: var(--bs-body-bg); border: 1px dashed var(--bs-border-color); border-radius: .5rem; padding: .75rem; margin-bottom: .75rem; cursor: grab; }
+  .canvas { min-height: 60vh; background: var(--bs-body-bg); border: 2px dashed var(--bs-border-color); border-radius: .5rem; padding: 1rem; }
+  .canvas .block { border-style: solid; cursor: grab; }
+  .drag-over { background: var(--bs-tertiary-bg); }
+  .toolbar { position: sticky; top: 56px; z-index: 1020; background: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color); box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+  .toolbar .container, .toolbar .container-fluid { overflow-x: auto; }
+  .toolbar .input-group { direction: rtl; }
+  .code-preview { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space: pre; background: var(--bs-tertiary-bg); color: var(--bs-body-color); border-radius: .5rem; border: 1px solid var(--bs-border-color); }
+  [data-bs-theme="dark"] .code-preview { background: #0f1012; color: #e5e7eb; }
   </style>
 </head>
 <body>
@@ -25,27 +26,46 @@
       <a class="navbar-brand fw-bold" href="/">📄 מחולל חשבוניות</a>
       <div class="navbar-nav ms-auto">
         <a class="nav-link" href="/templates">תבניות</a>
+        <div class="nav-item ms-3 form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="themeToggle">
+          <label class="form-check-label" for="themeToggle">כהה</label>
+        </div>
       </div>
     </div>
   </nav>
 
   <div class="toolbar py-2 mt-5">
     <div class="container d-flex align-items-center gap-2 flex-wrap">
-      <div class="input-group flex-nowrap" style="max-width: 520px;">
+      <div class="input-group flex-nowrap" style="max-width: 360px;">
         <span class="input-group-text">שם תבנית</span>
         <input id="templateName" class="form-control" placeholder="receipt / tax_invoice / ..." value="<%= name %>" />
       </div>
+      <div class="input-group flex-nowrap" style="max-width: 360px;">
+        <span class="input-group-text">API Base</span>
+        <input id="apiBase" class="form-control" placeholder="http://localhost:3000" />
+      </div>
+      <div class="input-group flex-nowrap" style="max-width: 320px;">
+        <span class="input-group-text">API Key</span>
+        <input id="apiKey" class="form-control" placeholder="x-api-key" />
+      </div>
       <button class="btn btn-outline-secondary" onclick="handleLoad()"><i class="bi bi-download me-1"></i>טען קיימת</button>
-      <button class="btn btn-secondary" onclick="handlePreview()"><i class="bi bi-eye me-1"></i>תצוגה מקדימה</button>
+      <button class="btn btn-secondary" onclick="handlePreview()"><i class="bi bi-eye me-1"></i>תצוגת תבנית</button>
       <button class="btn btn-primary" onclick="handleSave()"><i class="bi bi-save me-1"></i>שמירה לתבנית</button>
-      <button class="btn btn-outline-dark" onclick="handleExport()"><i class="bi bi-code me-1"></i>ייצוא HTML</button>
+      <div class="btn-group" role="group">
+        <button class="btn btn-outline-dark" onclick="handleExport()"><i class="bi bi-code me-1"></i>ייצוא HTML</button>
+        <button class="btn btn-outline-primary" onclick="handleGeneratePDF()"><i class="bi bi-file-earmark-pdf me-1"></i>PDF מתבנית</button>
+      </div>
+      <div class="form-check form-switch ms-auto">
+        <input class="form-check-input" type="checkbox" id="htmlModeToggle" onchange="toggleHtmlMode(this.checked)">
+        <label class="form-check-label" for="htmlModeToggle">מצב HTML ישיר</label>
+      </div>
     </div>
   </div>
 
   <div class="container-fluid mt-3">
     <div class="row">
       <aside class="col-md-3">
-        <div class="sidebar p-3 bg-white rounded shadow-sm">
+        <div class="sidebar p-3 rounded shadow-sm bg-body border">
           <h5 class="mb-3">בלוקים לגרירה</h5>
           <div class="block" draggable="true" data-block="header">כותרת + פרטי עסק</div>
           <div class="block" draggable="true" data-block="taxBadge">תגית חשבונית מס</div>
@@ -58,18 +78,77 @@
           <div class="block" draggable="true" data-block="credit">קרדיט BrainboxAI</div>
           <hr />
           <div class="block" draggable="true" data-block="exempt">הודעת עסקה פטורה</div>
+          <hr/>
+          <div class="block" draggable="true" data-block="cover">עמוד שער</div>
+          <div class="block" draggable="true" data-block="heading">כותרת</div>
+          <div class="block" draggable="true" data-block="paragraph">פסקה</div>
+          <div class="block" draggable="true" data-block="image">תמונה</div>
+          <div class="block" draggable="true" data-block="columns">שתי עמודות</div>
+          <div class="block" draggable="true" data-block="tableSimple">טבלה כללית</div>
+          <div class="block" draggable="true" data-block="list">רשימה</div>
+          <div class="block" draggable="true" data-block="signature">חתימות</div>
+          <div class="block" draggable="true" data-block="pageBreak">מעבר עמוד</div>
         </div>
       </aside>
       <main class="col-md-6">
-        <div id="canvas" class="canvas shadow-sm" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+        <div id="canvas" class="canvas shadow-sm border" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
           <div class="text-center text-muted py-5">גררו בלוקים לכאן כדי לבנות את התבנית</div>
         </div>
       </main>
       <aside class="col-md-3">
-        <div class="p-3 bg-white rounded shadow-sm">
-          <h5 class="mb-3">קוד תוצאה (תצוגה בלבד)</h5>
-          <pre id="code" class="code-preview p-3 small"></pre>
-          <div class="mt-3 text-muted small">טיפ: השתמשו בבלוקים המוכנים. בזמן שמירה אנחנו מייצרים תבנית Handlebars מלאה (HTML + CSS) בעברית ו־RTL.</div>
+        <div class="p-3 rounded shadow-sm bg-body border">
+          <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="pills-code-tab" data-bs-toggle="pill" data-bs-target="#pills-code" type="button" role="tab">HTML</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="pills-data-tab" data-bs-toggle="pill" data-bs-target="#pills-data" type="button" role="tab">נתוני דוגמה</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="pills-theme-tab" data-bs-toggle="pill" data-bs-target="#pills-theme" type="button" role="tab">ערכת נושא</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="pills-htmlmode-tab" data-bs-toggle="pill" data-bs-target="#pills-htmlmode" type="button" role="tab">HTML ישיר</button>
+            </li>
+          </ul>
+          <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="pills-code" role="tabpanel">
+              <h6 class="mb-2">קוד תוצאה (קריאה בלבד)</h6>
+              <pre id="code" class="code-preview p-3 small"></pre>
+            </div>
+            <div class="tab-pane fade" id="pills-data" role="tabpanel">
+              <div class="mb-2 d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" onclick="loadSampleData()">טען דוגמה</button>
+                <button class="btn btn-outline-success btn-sm" onclick="savePrefs()">שמור</button>
+              </div>
+              <textarea id="dataJson" class="form-control" rows="12" placeholder='{"customer":{"name":"ישראל"},"items":[{"description":"שירות","quantity":1,"rate":100,"amount":100}],"total":100}'></textarea>
+            </div>
+            <div class="tab-pane fade" id="pills-theme" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">פונט</label>
+                <select id="fontSelect" class="form-select">
+                  <option value="Heebo">Heebo</option>
+                  <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
+                  <option value="Assistant">Assistant</option>
+                  <option value="Rubik">Rubik</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Primary color</label>
+                <input id="primaryColor" type="color" class="form-control form-control-color" value="#2c3e50" />
+              </div>
+              <div class="text-muted small">הבחירות יוטמעו ב־HTML בזמן יצירה.</div>
+            </div>
+            <div class="tab-pane fade" id="pills-htmlmode" role="tabpanel">
+              <div class="mb-2 d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" onclick="previewRawHtml()">תצוגה</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="generatePdfFromHtml()">PDF מ־HTML</button>
+              </div>
+              <textarea id="rawHtml" class="form-control" rows="12" placeholder="הדבק כאן HTML מלא"></textarea>
+              <div class="form-text">לשימוש עם /api/html-to-pdf (נדרש API Key).</div>
+            </div>
+          </div>
+          <div class="mt-3 text-muted small">טיפ: שמרו API Base ו־Key בלחיצה על "שמור". השמירה היא בלוקאלית בדפדפן.</div>
         </div>
       </aside>
     </div>
@@ -78,13 +157,22 @@
   <footer class="text-center text-muted py-3">דף זה נבנה ע''י BrainboxAI</footer>
 
   <script>
+    // Theme toggle (Bootstrap 5.3 CSS variables)
+    (function(){
+      const toggle = document.getElementById('themeToggle');
+      const applyTheme = (t) => { document.documentElement.setAttribute('data-bs-theme', t); localStorage.setItem('theme', t); if(toggle) toggle.checked = t==='dark'; };
+      const saved = localStorage.getItem('theme');
+      const preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      applyTheme(saved || preferred);
+      if(toggle) toggle.addEventListener('change', ()=> applyTheme(toggle.checked ? 'dark' : 'light'));
+    })();
     const blockLibrary = {
       header: `
-        <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;border-bottom:2px solid #e0e0e0;padding-bottom:20px;">
+        <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;border-bottom:2px solid var(--bs-border-color, #e0e0e0);padding-bottom:20px;">
           <div>
             {{#if business.logo}}<img src="{{business.logo}}" alt="{{business.name}}" style="max-width:150px;max-height:80px;margin-bottom:10px;" />{{/if}}
-            <div style="font-size:24px;font-weight:700;color:#2c3e50;margin-bottom:5px;">{{business.name}}</div>
-            <div style="color:#666;line-height:1.6;">
+            <div style="font-size:24px;font-weight:700;color:var(--bs-primary, #2c3e50);margin-bottom:5px;">{{business.name}}</div>
+            <div style="color:var(--bs-secondary-color, #666);line-height:1.6;">
               {{business.address}}<br/>
               {{business.city}}, {{business.state}} {{business.postalCode}}<br/>
               {{#if business.phone}}טלפון: {{business.phone}}<br/>{{/if}}
@@ -94,14 +182,14 @@
             </div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:36px;font-weight:700;color:#2c3e50;margin-bottom:10px;">מסמך</div>
-            <div style="background:#f8f9fa;padding:15px;border-radius:5px;border-left:4px solid #3498db;">
+            <div style="font-size:36px;font-weight:700;color:var(--bs-primary, #2c3e50);margin-bottom:10px;">מסמך</div>
+            <div style="background:var(--bs-tertiary-bg, #f8f9fa);padding:15px;border-radius:5px;border-left:4px solid var(--bs-primary, #3498db);">
               <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-                <span style="font-weight:700;color:#2c3e50;">מס׳:</span>
+                <span style="font-weight:700;color:var(--bs-primary, #2c3e50);">מס׳:</span>
                 <span>{{invoiceNumber}}</span>
               </div>
               <div style="display:flex;justify-content:space-between;">
-                <span style="font-weight:700;color:#2c3e50;">תאריך:</span>
+                <span style="font-weight:700;color:var(--bs-primary, #2c3e50);">תאריך:</span>
                 <span>{{formatDate invoiceDate 'DD/MM/YYYY'}}</span>
               </div>
             </div>
@@ -110,13 +198,13 @@
       `,
       taxBadge: `
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-          <div style="background:#e74c3c;color:#fff;padding:8px 12px;border-radius:6px;font-weight:700;">חשבונית מס</div>
+          <div style="background:var(--bs-danger, #e74c3c);color:#fff;padding:8px 12px;border-radius:6px;font-weight:700;">חשבונית מס</div>
         </div>
       `,
       customer: `
         <div style="margin-bottom:30px;">
-          <div style="font-size:16px;font-weight:700;color:#2c3e50;margin-bottom:10px;text-transform:uppercase;">לכבוד</div>
-          <div style="background:#f8f9fa;padding:15px;border-radius:5px;border-left:4px solid #27ae60;">
+          <div style="font-size:16px;font-weight:700;color:var(--bs-primary, #2c3e50);margin-bottom:10px;text-transform:uppercase;">לכבוד</div>
+          <div style="background:var(--bs-tertiary-bg, #f8f9fa);padding:15px;border-radius:5px;border-left:4px solid var(--bs-success, #27ae60);">
             <strong>{{customer.name}}</strong><br/>
             {{#if customer.address}}{{customer.address}}<br/>{{customer.city}}, {{customer.state}} {{customer.postalCode}}<br/>{{/if}}
             {{#if customer.email}}אימייל: {{customer.email}}<br/>{{/if}}
@@ -125,22 +213,22 @@
         </div>
       `,
       items: `
-        <table style="width:100%;border-collapse:collapse;margin-bottom:30px;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.1);border-radius:5px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:30px;background:var(--bs-body-bg, #fff);box-shadow:0 2px 4px rgba(0,0,0,.08);border-radius:5px;overflow:hidden;border:1px solid var(--bs-border-color,#ecf0f1);">
           <thead>
             <tr>
-              <th style="background:#3498db;color:#fff;padding:15px 10px;text-align:right;">תיאור</th>
-              <th style="background:#3498db;color:#fff;padding:15px 10px;text-align:center;">כמות</th>
-              <th style="background:#3498db;color:#fff;padding:15px 10px;text-align:left;">מחיר יח׳</th>
-              <th style="background:#3498db;color:#fff;padding:15px 10px;text-align:left;">סכום</th>
+              <th style="background:var(--bs-primary, #3498db);color:#fff;padding:15px 10px;text-align:right;">תיאור</th>
+              <th style="background:var(--bs-primary, #3498db);color:#fff;padding:15px 10px;text-align:center;">כמות</th>
+              <th style="background:var(--bs-primary, #3498db);color:#fff;padding:15px 10px;text-align:left;">מחיר יח׳</th>
+              <th style="background:var(--bs-primary, #3498db);color:#fff;padding:15px 10px;text-align:left;">סכום</th>
             </tr>
           </thead>
           <tbody>
             {{#each items}}
             <tr>
-              <td style="padding:12px 10px;border-bottom:1px solid #ecf0f1;">{{description}}</td>
-              <td style="padding:12px 10px;border-bottom:1px solid #ecf0f1;text-align:center;">{{quantity}}</td>
-              <td style="padding:12px 10px;border-bottom:1px solid #ecf0f1;text-align:left;">{{formatCurrency rate ../currency}}</td>
-              <td style="padding:12px 10px;border-bottom:1px solid #ecf0f1;text-align:left;">{{formatCurrency amount ../currency}}</td>
+              <td style="padding:12px 10px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);">{{description}}</td>
+              <td style="padding:12px 10px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:center;">{{quantity}}</td>
+              <td style="padding:12px 10px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:left;">{{formatCurrency rate ../currency}}</td>
+              <td style="padding:12px 10px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:left;">{{formatCurrency amount ../currency}}</td>
             </tr>
             {{/each}}
           </tbody>
@@ -148,8 +236,8 @@
       `,
       taxInfo: `
         {{#if taxRate}}
-        <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:6px;padding:15px;margin-bottom:20px;">
-          <div style="font-weight:700;color:#856404;margin-bottom:8px;">מידע מס</div>
+        <div style="background:var(--bs-warning-bg-subtle,#fff3cd);border:2px solid var(--bs-warning,#ffc107);border-radius:6px;padding:15px;margin-bottom:20px;">
+          <div style="font-weight:700;color:var(--bs-warning-text-emphasis,#856404);margin-bottom:8px;">מידע מס</div>
           <div>
             שיעור מס: {{taxRate}}% | סכום מס: <strong>{{formatCurrency taxAmount currency}}</strong>
           </div>
@@ -160,18 +248,18 @@
         <div style="display:flex;justify-content:flex-end;margin-bottom:30px;">
           <table style="min-width:300px;border-collapse:collapse;">
             <tr>
-              <td style="padding:8px 15px;border-bottom:1px solid #ecf0f1;text-align:right;font-weight:700;color:#2c3e50;">סיכום ביניים:</td>
-              <td style="padding:8px 15px;border-bottom:1px solid #ecf0f1;text-align:left;font-weight:700;">{{formatCurrency subtotal currency}}</td>
+              <td style="padding:8px 15px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:right;font-weight:700;color:var(--bs-primary,#2c3e50);">סיכום ביניים:</td>
+              <td style="padding:8px 15px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:left;font-weight:700;">{{formatCurrency subtotal currency}}</td>
             </tr>
             {{#if taxRate}}
             <tr>
-              <td style="padding:8px 15px;border-bottom:1px solid #ecf0f1;text-align:right;font-weight:700;color:#2c3e50;">מס ({{taxRate}}%):</td>
-              <td style="padding:8px 15px;border-bottom:1px solid #ecf0f1;text-align:left;font-weight:700;">{{formatCurrency taxAmount currency}}</td>
+              <td style="padding:8px 15px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:right;font-weight:700;color:var(--bs-primary,#2c3e50);">מס ({{taxRate}}%):</td>
+              <td style="padding:8px 15px;border-bottom:1px solid var(--bs-border-color,#ecf0f1);text-align:left;font-weight:700;">{{formatCurrency taxAmount currency}}</td>
             </tr>
             {{/if}}
             <tr>
-              <td style="padding:8px 15px;background:#2c3e50;color:#fff;text-align:right;font-weight:700;">סה"כ:</td>
-              <td style="padding:8px 15px;background:#2c3e50;color:#fff;text-align:left;font-weight:700;">{{formatCurrency total currency}}</td>
+              <td style="padding:8px 15px;background:var(--bs-primary,#2c3e50);color:#fff;text-align:right;font-weight:700;">סה"כ:</td>
+              <td style="padding:8px 15px;background:var(--bs-primary,#2c3e50);color:#fff;text-align:left;font-weight:700;">{{formatCurrency total currency}}</td>
             </tr>
           </table>
         </div>
@@ -179,27 +267,32 @@
       notes: `
         {{#if notes}}
         <div style="margin-top:10px;">
-          <div style="font-size:16px;font-weight:700;color:#2c3e50;margin-bottom:10px;">הערות</div>
-          <div style="background:#fff3cd;border:1px solid #ffeaa7;border-radius:5px;padding:15px;color:#856404;">{{notes}}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--bs-primary,#2c3e50);margin-bottom:10px;">הערות</div>
+          <div style="background:var(--bs-warning-bg-subtle,#fff3cd);border:1px solid var(--bs-warning,#ffeaa7);border-radius:5px;padding:15px;color:var(--bs-warning-text-emphasis,#856404);">{{notes}}</div>
         </div>
         {{/if}}
       `,
       thanks: `
-        <div style="text-align:center;margin-top:30px;font-size:16px;color:#27ae60;font-weight:700;">תודה על העסקה!</div>
+        <div style="text-align:center;margin-top:30px;font-size:16px;color:var(--bs-success,#27ae60);font-weight:700;">תודה על העסקה!</div>
       `,
       credit: `
-        <div style="text-align:center;margin-top:14px;font-size:10px;color:#666;">דף זה נבנה ע''י BrainboxAI</div>
+        <div style="text-align:center;margin-top:14px;font-size:10px;color:var(--bs-secondary-color,#666);">דף זה נבנה ע''י BrainboxAI</div>
       `,
       exempt: `
-        <div style="background:#e8f5e8;border:2px solid #27ae60;border-radius:6px;padding:15px;margin-bottom:20px;text-align:center;">
-          <div style="font-weight:700;color:#27ae60;margin-bottom:8px;">עסקה פטורה ממס</div>
-          <div style="color:#2d5a2d;">קבלה זו מתייחסת לעסקה הפטורה ממס. לא נגבה מס בהתאם לתקנות המס החלות.</div>
+        <div style="background:color-mix(in srgb, var(--bs-success,#27ae60) 10%, transparent);border:2px solid var(--bs-success,#27ae60);border-radius:6px;padding:15px;margin-bottom:20px;text-align:center;">
+          <div style="font-weight:700;color:var(--bs-success,#27ae60);margin-bottom:8px;">עסקה פטורה ממס</div>
+          <div style="color:color-mix(in srgb, var(--bs-success,#27ae60) 40%, var(--bs-body-color,#333));">קבלה זו מתייחסת לעסקה הפטורה ממס. לא נגבה מס בהתאם לתקנות המס החלות.</div>
         </div>
       `
     };
 
-    const scaffold = (inner) => `<!DOCTYPE html>
-<html lang=\"he\" dir=\"rtl\">\n<head>\n<meta charset=\"UTF-8\"/>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n<title>{{invoiceNumber}}</title>\n<style>body{font-family:'Arial',sans-serif;font-size:12px;line-height:1.4;color:#333;background:#fff}.container{max-width:800px;margin:0 auto;padding:40px 30px}</style>\n</head>\n<body>\n<div class=\"container\">\n${inner}\n<div style=\"text-align:center;margin-top:20px;font-size:10px;color:#666;\">נוצר בתאריך {{formatDate generatedDate 'DD/MM/YYYY HH:mm:ss'}}</div>\n</div>\n</body>\n</html>`;
+    const scaffold = (inner) => {
+      const font = localStorage.getItem('font') || 'Heebo';
+      const primary = localStorage.getItem('primary') || '#2c3e50';
+      const gfont = encodeURIComponent(font);
+      return `<!DOCTYPE html>
+<html lang=\"he\" dir=\"rtl\">\n<head>\n<meta charset=\"UTF-8\"/>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n<title>{{invoiceNumber}}</title>\n<link href=\"https://fonts.googleapis.com/css2?family=${gfont}:wght@300;400;600;700;900&display=swap\" rel=\"stylesheet\">\n<style>body{font-family:'${font}','Noto Sans Hebrew','Arial Unicode MS','Segoe UI',Arial,sans-serif;font-size:12px;line-height:1.4;color:#333;background:#fff} a{color:${primary}} .container{max-width:800px;margin:0 auto;padding:40px 30px}</style>\n</head>\n<body>\n<div class=\"container\">\n${inner}\n<div style=\"text-align:center;margin-top:20px;font-size:10px;color:#666;\">נוצר בתאריך {{formatDate generatedDate 'DD/MM/YYYY HH:mm:ss'}}</div>\n</div>\n</body>\n</html>`;
+    };
 
     const canvasEl = document.getElementById('canvas');
     const codeEl = document.getElementById('code');
@@ -228,7 +321,7 @@
     }
 
     function labelOf(type){
-      const map = { header:'כותרת + פרטי עסק', taxBadge:'תגית חשבונית מס', customer:'פרטי לקוח', items:'טבלת פריטים', taxInfo:'מידע מס', totals:'סיכומים', notes:'הערות', thanks:'ברכת תודה', credit:'קרדיט', exempt:'הודעת פטור' };
+      const map = { header:'כותרת + פרטי עסק', taxBadge:'תגית חשבונית מס', customer:'פרטי לקוח', items:'טבלת פריטים', taxInfo:'מידע מס', totals:'סיכומים', notes:'הערות', thanks:'ברכת תודה', credit:'קרדיט', exempt:'הודעת פטור', cover:'עמוד שער', heading:'כותרת', paragraph:'פסקה', image:'תמונה', columns:'שתי עמודות', tableSimple:'טבלה כללית', list:'רשימה', signature:'חתימות', pageBreak:'מעבר עמוד' };
       return map[type] || type;
     }
 
@@ -256,7 +349,7 @@
     async function handlePreview(){
       const name = document.getElementById('templateName').value.trim() || 'receipt';
       // תצוגה מקדימה משתמשת ב-API ומציגה בחלון
-      const payload = { templateType: name, customer: { name: 'לקוח לדוגמה' }, items: [{ description: 'שירות', quantity: 1, rate: 100, amount: 100 }], total: 100 };
+      const payload = getDataPayload(name);
       const r = await fetch('/api/preview', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       const html = await r.text();
       const w = window.open('', '_blank'); w.document.write(html); w.document.close();
@@ -292,6 +385,82 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
     }
+
+    // ---- Enhancements: data editor, prefs, and direct API actions ----
+    function getDataPayload(templateType){
+      let data = {};
+      try { data = JSON.parse(document.getElementById('dataJson').value || '{}'); } catch {}
+      return { templateType, ...data };
+    }
+
+    function loadSampleData(){
+      const sample = {
+        customer:{ name:'ישראל ישראלי', email:'israel@example.com', phone:'+972-55-1234567' },
+        items:[{ description:'שירות', quantity:1, rate:100, amount:100 }],
+        subtotal:100, total:100, currency:'₪'
+      };
+      document.getElementById('dataJson').value = JSON.stringify(sample, null, 2);
+    }
+
+    function savePrefs(){
+      localStorage.setItem('apiBase', document.getElementById('apiBase').value.trim());
+      localStorage.setItem('apiKey', document.getElementById('apiKey').value.trim());
+      const fontSel = document.getElementById('fontSelect');
+      const colorEl = document.getElementById('primaryColor');
+      if (fontSel) localStorage.setItem('font', fontSel.value);
+      if (colorEl) localStorage.setItem('primary', colorEl.value);
+      alert('הגדרות נשמרו');
+    }
+
+    function toggleHtmlMode(on){
+      const tabTrigger = document.querySelector('#pills-htmlmode-tab');
+      if(on && tabTrigger) new bootstrap.Tab(tabTrigger).show();
+    }
+
+    async function handleGeneratePDF(){
+      const apiBase = localStorage.getItem('apiBase') || document.getElementById('apiBase').value.trim() || '';
+      const apiKey = localStorage.getItem('apiKey') || document.getElementById('apiKey').value.trim() || '';
+      if(!apiBase){ alert('נא להגדיר API Base'); return; }
+      const name = document.getElementById('templateName').value.trim() || 'receipt';
+      const payload = getDataPayload(name);
+      const res = await fetch(`${apiBase.replace(/\/$/,'')}/api/generate-pdf`, { method:'POST', headers:{ 'Content-Type':'application/json', ...(apiKey && { 'x-api-key': apiKey }) }, body: JSON.stringify(payload) });
+      if(!res.ok){ alert('קריאת API נכשלה'); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${name}-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url);
+    }
+
+    function previewRawHtml(){
+      const html = document.getElementById('rawHtml').value.trim();
+      if(!html){ alert('נא להדביק HTML'); return; }
+      const w = window.open('', '_blank'); w.document.write(html); w.document.close();
+    }
+
+    async function generatePdfFromHtml(){
+      const apiBase = localStorage.getItem('apiBase') || document.getElementById('apiBase').value.trim() || '';
+      const apiKey = localStorage.getItem('apiKey') || document.getElementById('apiKey').value.trim() || '';
+      const html = document.getElementById('rawHtml').value.trim();
+      if(!apiBase || !html){ alert('נא להגדיר API Base ולהדביק HTML'); return; }
+      const res = await fetch(`${apiBase.replace(/\/$/,'')}/api/html-to-pdf`, { method:'POST', headers:{ 'Content-Type':'application/json', ...(apiKey && { 'x-api-key': apiKey }) }, body: JSON.stringify({ html, filename: `raw-${Date.now()}` }) });
+      if(!res.ok){ alert('קריאת API נכשלה'); return; }
+      const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `raw-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url);
+    }
+
+    // init from localStorage
+    (function(){
+      const apiBase = localStorage.getItem('apiBase') || '';
+      const apiKey = localStorage.getItem('apiKey') || '';
+      const font = localStorage.getItem('font') || 'Heebo';
+      const primary = localStorage.getItem('primary') || '#2c3e50';
+      document.getElementById('apiBase').value = apiBase;
+      document.getElementById('apiKey').value = apiKey;
+      const fontSel = document.getElementById('fontSelect'); if(fontSel) fontSel.value = font;
+      const prim = document.getElementById('primaryColor'); if(prim) prim.value = primary;
+      // Load default sample data
+      const dataArea = document.getElementById('dataJson');
+      if (dataArea && !dataArea.value) {
+        loadSampleData();
+      }
+    })();
   </script>
 </body>
 </html>

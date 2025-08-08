@@ -4,25 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <style>
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 80px 0;
-        }
-        .feature-card {
-            transition: transform 0.3s ease;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        .api-example {
-            background: #f8f9fa;
-            border-left: 4px solid #007bff;
-        }
+        .card-hover { transition: transform .2s ease; }
+        .card-hover:hover { transform: translateY(-2px); }
+        .muted { color: #6c757d; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     </style>
 </head>
 <body>
@@ -37,58 +24,143 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container text-center">
-            <h1 class="display-4 fw-bold mb-4">מחולל חשבוניות וקבלות מקצועי</h1>
-            <p class="lead mb-4">יצירת קבצי PDF יפים ומקצועיים לחשבוניות, קבלות ומסמכי מס באמצעות API מתקדם.</p>
-            <div class="row justify-content-center mt-5">
-                <div class="col-md-8">
-                    <div class="d-flex justify-content-center gap-3">
-                        <span class="badge bg-success fs-6 px-3 py-2">✅ מוכן ל-n8n</span>
-                        <span class="badge bg-info fs-6 px-3 py-2">🐳 תמיכה ב-Docker</span>
-                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">⚡ יצירת PDF מהירה</span>
-                    </div>
+    <!-- Dashboard Header -->
+    <section class="py-4 bg-body-tertiary border-bottom">
+        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1">לוח בקרה – מחולל PDF</h1>
+                <div class="muted">נהל תבניות, צור PDF מתבנית או ישירות מ‑HTML</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/templates" class="btn btn-outline-secondary"><i class="bi bi-layout-text-window me-1"></i>ניהול תבניות</a>
+                <a href="/templates/designer" class="btn btn-primary"><i class="bi bi-pencil-square me-1"></i>עורך תבניות</a>
+                <div class="form-check form-switch d-flex align-items-center ms-2">
+                  <input class="form-check-input" type="checkbox" id="themeToggle">
+                  <label class="form-check-label ms-2" for="themeToggle">מצב כהה</label>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-5">
+    <!-- Dashboard Content -->
+    <section class="py-4">
         <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col-12">
-                    <h2 class="fw-bold">יכולות</h2>
-                    <p class="text-muted">כל מה שצריך ליצירת חשבוניות מקצועיות</p>
+            <!-- Stats -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="card card-hover h-100">
+                        <div class="card-body">
+                            <div class="muted small">בריאות שירות</div>
+                            <div id="statHealth" class="h5 mb-1">—</div>
+                            <div class="muted small mono" id="statHealthTime">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card card-hover h-100">
+                        <div class="card-body">
+                            <div class="muted small">מס׳ תבניות</div>
+                            <div id="statTemplates" class="h5 mb-1">—</div>
+                            <a href="/templates" class="small">לרשימת התבניות</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card card-hover h-100">
+                        <div class="card-body">
+                            <div class="muted small">API Base</div>
+                            <div id="statApiBase" class="text-truncate mono">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card card-hover h-100">
+                        <div class="card-body">
+                            <div class="muted small">פעולות מהירות</div>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <a href="/templates/designer" class="btn btn-sm btn-primary">עורך</a>
+                                <a href="/templates" class="btn btn-sm btn-outline-secondary">תבניות</a>
+                                <button class="btn btn-sm btn-outline-primary" onclick="quickSamplePdf()">PDF לדוגמה</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card feature-card h-100 p-4 text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-file-earmark-pdf display-4 text-danger"></i>
+
+            <div class="row g-3">
+                <!-- Quick Generate from Template -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-body"><strong>יצירת PDF מתבנית</strong></div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">תבנית</label>
+                                    <select id="qTemplate" class="form-select">
+                                        <option value="receipt">receipt</option>
+                                        <option value="tax_invoice">tax_invoice</option>
+                                        <option value="exempt_business_receipt">exempt_business_receipt</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">שם לקוח</label>
+                                    <input id="qName" class="form-control" value="ישראל ישראלי" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">סכום</label>
+                                    <input id="qTotal" type="number" class="form-control" value="150" step="0.01" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">תיאור פריט</label>
+                                    <input id="qDesc" class="form-control" value="שירות מקצועי" />
+                                </div>
+                            </div>
                         </div>
-                        <h5>יצירת PDF</h5>
-                        <p class="text-muted">יצירת PDF באיכות גבוהה עם Puppeteer, עיצוב מקצועי ואופטימיזציה להדפסה.</p>
+                        <div class="card-footer bg-body d-flex gap-2">
+                            <button class="btn btn-primary" onclick="submitTemplatePdf()"><i class="bi bi-file-earmark-pdf me-1"></i>יצירת PDF</button>
+                            <button class="btn btn-outline-secondary" onclick="openPreview()"><i class="bi bi-eye me-1"></i>תצוגה מקדימה</button>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card feature-card h-100 p-4 text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-palette display-4 text-primary"></i>
+
+                <!-- HTML to PDF -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-body"><strong>HTML → PDF</strong></div>
+                        <div class="card-body">
+                            <textarea id="qHtml" class="form-control mono" rows="8" placeholder="<!DOCTYPE html>\n<html lang=\"he\" dir=\"rtl\">...</html>"></textarea>
+                            <div class="form-text">מדביקים HTML מלא ולוחצים יצירת PDF</div>
                         </div>
-                        <h5>תבניות מרובות</h5>
-                        <p class="text-muted">בחרו תבנית קבלה, חשבונית מס או קבלה לעוסק פטור, עם מיתוג מותאם אישית.</p>
+                        <div class="card-footer bg-body d-flex gap-2">
+                            <button class="btn btn-outline-primary" onclick="submitHtmlPdf()"><i class="bi bi-file-earmark-pdf me-1"></i>יצירת PDF</button>
+                            <button class="btn btn-outline-secondary" onclick="loadHtmlSample()">טען דוגמת HTML</button>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card feature-card h-100 p-4 text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-gear display-4 text-success"></i>
+            </div>
+
+            <!-- Templates List & API Settings -->
+            <div class="row g-3 mt-1">
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header bg-body"><strong>תבניות זמינות</strong></div>
+                        <div class="list-group list-group-flush" id="templateList"></div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-body"><strong>הגדרות API (נשמר מקומית)</strong></div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <label class="form-label">API Base</label>
+                                <input id="apiBase" class="form-control" placeholder="http://localhost:3000" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">API Key</label>
+                                <input id="apiKey" class="form-control" placeholder="x-api-key" />
+                            </div>
+                            <button class="btn btn-outline-success" onclick="savePrefs()">שמור</button>
                         </div>
-                        <h5>אינטגרציה עם n8n</h5>
-                        <p class="text-muted">חיבור פשוט לזרימות n8n ליצירה ועיבוד אוטומטי של חשבוניות.</p>
                     </div>
                 </div>
             </div>
@@ -227,7 +299,116 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <script>
+      const apiBaseEl = document.getElementById('apiBase');
+      const apiKeyEl = document.getElementById('apiKey');
+      const base = () => (localStorage.getItem('apiBase') || apiBaseEl.value || '').replace(/\/$/, '');
+      const key = () => (localStorage.getItem('apiKey') || apiKeyEl.value || '');
+      const themeToggleEl = document.getElementById('themeToggle');
+
+      function applyTheme(theme){
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('theme', theme);
+        if(themeToggleEl) themeToggleEl.checked = theme === 'dark';
+      }
+
+      function initTheme(){
+        const saved = localStorage.getItem('theme');
+        const preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        applyTheme(saved || preferred);
+        if(themeToggleEl){
+          themeToggleEl.addEventListener('change', () => applyTheme(themeToggleEl.checked ? 'dark' : 'light'));
+        }
+      }
+
+      async function loadStats(){
+        try {
+          const h = await fetch('/api/health').then(r=>r.json());
+          document.getElementById('statHealth').textContent = h.success ? 'תקין' : 'שגיאה';
+          document.getElementById('statHealthTime').textContent = h.timestamp || '';
+        } catch {}
+        try {
+          const t = await fetch('/api/templates').then(r=>r.json());
+          if(t.success){
+            document.getElementById('statTemplates').textContent = t.templates.length;
+            const list = document.getElementById('templateList');
+            list.innerHTML = t.templates.map(name => `
+              <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="/templates/edit/${name}">
+                <span><i class="bi bi-file-earmark-text me-2"></i>${name}</span>
+                <span class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-secondary" onclick="event.preventDefault(); window.location='/templates/edit/${name}'">עריכה</button>
+                  <button class="btn btn-sm btn-primary" onclick="event.preventDefault(); previewName('${name}')">תצוגה</button>
+                </span>
+              </a>`).join('');
+          }
+        } catch {}
+        document.getElementById('statApiBase').textContent = localStorage.getItem('apiBase') || '—';
+      }
+
+      function savePrefs(){
+        localStorage.setItem('apiBase', apiBaseEl.value.trim());
+        localStorage.setItem('apiKey', apiKeyEl.value.trim());
+        document.getElementById('statApiBase').textContent = apiBaseEl.value.trim();
+      }
+
+      function payloadFromQuick(templateType){
+        return {
+          templateType,
+          customer: { name: document.getElementById('qName').value, email: 'test@example.com' },
+          items: [{ description: document.getElementById('qDesc').value, quantity: 1, rate: Number(document.getElementById('qTotal').value), amount: Number(document.getElementById('qTotal').value) }],
+          total: Number(document.getElementById('qTotal').value)
+        };
+      }
+
+      async function submitTemplatePdf(){
+        const tpl = document.getElementById('qTemplate').value;
+        const res = await fetch(`${base() || ''}/api/generate-pdf`, { method:'POST', headers:{ 'Content-Type':'application/json', ...(key() && {'x-api-key': key()}) }, body: JSON.stringify(payloadFromQuick(tpl)) });
+        if(!res.ok){ alert('קריאת API נכשלה'); return; }
+        const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${tpl}-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url);
+      }
+
+      async function openPreview(){
+        const tpl = document.getElementById('qTemplate').value;
+        const res = await fetch('/api/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payloadFromQuick(tpl)) });
+        const html = await res.text(); const w = window.open('', '_blank'); w.document.write(html); w.document.close();
+      }
+
+      async function previewName(name){
+        const res = await fetch('/api/preview', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ templateType: name, customer:{ name: 'ישראל' }, items:[{ description:'שירות', quantity:1, rate:100, amount:100 }], total:100 }) });
+        const html = await res.text(); const w = window.open('', '_blank'); w.document.write(html); w.document.close();
+      }
+
+      function loadHtmlSample(){
+        const sample = `<!DOCTYPE html>\n<html lang=\"he\" dir=\"rtl\"><head><meta charset=\"UTF-8\"><title>מסמך</title></head><body style=\"font-family:Heebo, Arial; direction:rtl; text-align:right; padding:24px;\"><h1>שלום עולם</h1><p>זהו מסמך בדיקה להמרה ל‑PDF.</p></body></html>`;
+        document.getElementById('qHtml').value = sample;
+      }
+
+      async function submitHtmlPdf(){
+        const html = document.getElementById('qHtml').value.trim();
+        if(!html){ alert('נא להדביק HTML'); return; }
+        const res = await fetch(`${base() || ''}/api/html-to-pdf`, { method:'POST', headers:{ 'Content-Type':'application/json', ...(key() && {'x-api-key': key()}) }, body: JSON.stringify({ html, filename: `html-${Date.now()}` }) });
+        if(!res.ok){ alert('קריאת API נכשלה'); return; }
+        const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `html-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url);
+      }
+
+      async function quickSamplePdf(){
+        document.getElementById('qTemplate').value = 'receipt';
+        document.getElementById('qName').value = 'ישראל ישראלי';
+        document.getElementById('qTotal').value = '100';
+        document.getElementById('qDesc').value = 'שירות לדוגמה';
+        await submitTemplatePdf();
+      }
+
+      // init
+      (function(){
+        apiBaseEl.value = localStorage.getItem('apiBase') || '';
+        apiKeyEl.value = localStorage.getItem('apiKey') || '';
+        initTheme();
+        loadStats();
+        loadHtmlSample();
+      })();
+    </script>
 </body>
 </html>
