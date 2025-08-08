@@ -14,13 +14,13 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
-// Rate limiting with environment variable support
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes default
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 requests default
-  message: 'יותר מדי בקשות מכתובת זו, אנא נסה שוב מאוחר יותר.'
+// Basic rate limiting for non-API routes (web interface)
+const webLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: 'יותר מדי בקשות מכתובת זו, אנא נסה שוב מאוחר יותר.',
+  skip: (req) => req.path.startsWith('/api/') // Skip API routes (they have their own auth)
 });
-app.use('/api/', limiter);
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -78,7 +78,7 @@ const webRoutes = require('./src/routes/web');
 
 // Routes
 app.use('/api', apiRoutes);
-app.use('/', webRoutes);
+app.use('/', webLimiter, webRoutes);
 
 // Error handling middleware
 app.use((error, req, res, next) => {

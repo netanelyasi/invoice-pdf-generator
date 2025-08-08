@@ -5,7 +5,8 @@
       "Bash(npm install:*)",
       "Bash(npm ls:*)",
       "Bash(npm start)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

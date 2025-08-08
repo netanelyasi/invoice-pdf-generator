@@ -4,15 +4,19 @@ const pdfController = require('../controllers/pdfController');
 const { body, validationResult } = require('express-validator');
 const fs = require('fs-extra');
 const path = require('path');
+const { authenticatedRateLimit, bypassHealthCheck } = require('../middleware/auth');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
 
-// PDF Generation endpoint
-router.post('/generate-pdf', [
-  body('templateType').notEmpty().withMessage('נדרש סוג תבנית'),
-  body('customer.name').notEmpty().withMessage('נדרש שם לקוח'),
-  body('items').isArray({ min: 1 }).withMessage('נדרש לפחות פריט אחד')
-], async (req, res) => {
+// PDF Generation endpoint - PROTECTED with API key
+router.post('/generate-pdf', 
+  ...authenticatedRateLimit,
+  [
+    body('templateType').notEmpty().withMessage('נדרש סוג תבנית'),
+    body('customer.name').notEmpty().withMessage('נדרש שם לקוח'),
+    body('items').isArray({ min: 1 }).withMessage('נדרש לפחות פריט אחד')
+  ], 
+  async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -50,8 +54,8 @@ router.post('/generate-pdf', [
   }
 });
 
-// Get available templates
-router.get('/templates', async (req, res) => {
+// Get available templates - PROTECTED
+router.get('/templates', bypassHealthCheck, async (req, res) => {
   try {
     const templates = await pdfController.getAvailableTemplates();
     
@@ -68,8 +72,8 @@ router.get('/templates', async (req, res) => {
   }
 });
 
-// Get a specific template content
-router.get('/templates/:name', async (req, res) => {
+// Get a specific template content - PROTECTED
+router.get('/templates/:name', bypassHealthCheck, async (req, res) => {
   try {
     const templateName = req.params.name;
     const filePath = path.join(templatesDir, `${templateName}.hbs`);
@@ -86,10 +90,13 @@ router.get('/templates/:name', async (req, res) => {
   }
 });
 
-// Update a specific template content
-router.put('/templates/:name', [
-  body('content').isString().notEmpty().withMessage('נדרש תוכן לתבנית')
-], async (req, res) => {
+// Update a specific template content - PROTECTED
+router.put('/templates/:name', 
+  bypassHealthCheck,
+  [
+    body('content').isString().notEmpty().withMessage('נדרש תוכן לתבנית')
+  ], 
+  async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -112,10 +119,13 @@ router.put('/templates/:name', [
   }
 });
 
-// Preview endpoint (returns HTML instead of PDF)
-router.post('/preview', [
-  body('templateType').notEmpty().withMessage('נדרש סוג תבנית')
-], async (req, res) => {
+// Preview endpoint (returns HTML instead of PDF) - PROTECTED
+router.post('/preview', 
+  bypassHealthCheck,
+  [
+    body('templateType').notEmpty().withMessage('נדרש סוג תבנית')
+  ], 
+  async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

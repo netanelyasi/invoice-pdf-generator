@@ -6,6 +6,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - API_KEY=${API_KEY}
+      - API_RATE_LIMIT_MAX=500
       - PUPPETEER_HEADLESS=true
       - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu,--no-zygote
       - DB_PATH=/usr/src/app/data/invoices.db
