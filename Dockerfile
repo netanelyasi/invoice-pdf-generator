@@ -1,9 +1,10 @@
 # Use the official Node.js image as base
 FROM node:18-bullseye-slim
 
-# Install necessary packages for Puppeteer
+# Install necessary packages for Puppeteer and health checks
 RUN apt-get update && apt-get install -y \
     wget \
+    curl \
     gnupg \
     ca-certificates \
     procps \
