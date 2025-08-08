@@ -67,10 +67,14 @@ router.post('/generate-pdf',
     // Generate PDF
     const pdfBuffer = await pdfController.generatePDF(templateType, data);
 
-    // Set response headers for PDF
+    // Set response headers for PDF (sanitize filename for header)
+    const safeFilename = (data.invoiceNumber || Date.now()).toString()
+      .replace(/[^\w\-\.]/g, '_') // Replace non-alphanumeric chars with underscore
+      .substring(0, 50); // Limit length
+    
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="invoice-${data.invoiceNumber || Date.now()}.pdf"`,
+      'Content-Disposition': `attachment; filename="invoice-${safeFilename}.pdf"`,
       'Content-Length': pdfBuffer.length,
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
@@ -238,7 +242,8 @@ router.post('/debug-pdf',
       res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="debug-test.pdf"',
-        'Content-Length': pdfBuffer.length
+        'Content-Length': pdfBuffer.length,
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
       });
       
       res.end(pdfBuffer, 'binary');
