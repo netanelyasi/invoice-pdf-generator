@@ -1,0 +1,42 @@
+{
+  "name": "invoice-pdf-generator",
+  "version": "1.0.0",
+  "description": "Professional invoice and receipt PDF generator with customizable templates and management UI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "echo 'No build step required'",
+    "test": "echo 'Tests not implemented yet'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "puppeteer": "^21.5.2",
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.6",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "handlebars": "^4.7.8",
+    "moment": "^2.29.4",
+    "uuid": "^9.0.1",
+    "fs-extra": "^11.1.1",
+    "express-rate-limit": "^7.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "invoice",
+    "pdf",
+    "receipt",
+    "generator",
+    "n8n",
+    "business",
+    "dokploy"
+  ],
+  "author": "Your Business",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
