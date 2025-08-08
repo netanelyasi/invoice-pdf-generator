@@ -235,7 +235,7 @@ router.post('/html-to-pdf',
         const hasLangAttr = /<html[^>]*\slang\s*=\s*['"][^'"]+['"]/i.test(rawHtml);
 
         const fontLinks = `\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;600;700;900&family=Heebo:wght@300;400;600;700;900&display=swap" rel="stylesheet">`;
-        const fontStyle = `\n<style> body { font-family: 'Heebo','Noto Sans Hebrew','Arial Unicode MS','Segoe UI',Arial,sans-serif; } </style>`;
+        const fontStyle = `\n<style> html, body, * { font-family: 'Heebo','Noto Sans Hebrew','Arial Unicode MS','Segoe UI',Arial,sans-serif !important; } </style>`;
         const rtlStyle = hasHebrewText ? `\n<style> html { direction: rtl; } body { direction: rtl; text-align: right; } </style>` : '';
 
         let output = rawHtml;
