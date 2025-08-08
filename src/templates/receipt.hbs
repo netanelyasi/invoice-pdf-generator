@@ -228,14 +228,46 @@
             color: #666;
         }
 
+        /* Prevent page breaks and extra pages */
+        @page {
+            size: A4;
+            margin: 20px;
+        }
+        
+        body {
+            overflow: hidden;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+        
+        .container {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+            break-after: avoid;
+            break-inside: avoid;
+            overflow: hidden;
+        }
+        
+        .items-table {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
         @media print {
             .container {
                 margin: 0;
                 padding: 20px;
+                page-break-after: avoid;
             }
             
             body {
                 font-size: 11px;
+                overflow: hidden;
+            }
+            
+            * {
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
         }
     </style>

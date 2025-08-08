@@ -124,7 +124,7 @@ class PDFController {
       // Wait for fonts to load
       await page.evaluateHandle('document.fonts.ready');
 
-      // Generate PDF with proper options
+      // Generate PDF with single-page optimization
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
@@ -134,9 +134,12 @@ class PDFController {
           bottom: '20px',
           left: '20px'
         },
-        preferCSSPageSize: false,
+        preferCSSPageSize: true,
         displayHeaderFooter: false,
-        timeout: 30000
+        timeout: 30000,
+        width: '210mm',
+        height: '297mm',
+        pageRanges: '1'
       });
 
       await browser.close();
