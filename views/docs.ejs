@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            position: sticky;
+            top: 80px;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+        .content-section {
+            padding-top: 20px;
+        }
+        pre {
+            background: #f8f9fa !important;
+            border: 1px solid #e9ecef;
+            border-radius: 0.375rem;
+        }
+        .endpoint-card {
+            border-left: 4px solid;
+        }
+        .post { border-left-color: #198754; }
+        .get { border-left-color: #0d6efd; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">📄 Invoice Generator</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">בית</a>
+                <a class="nav-link active" href="/docs">תיעוד API</a>
+                <a class="nav-link" href="/templates">תבניות</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid" style="margin-top: 70px;">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="sidebar">
+                    <nav class="nav nav-pills flex-column">
+                        <a class="nav-link" href="#overview">Overview</a>
+                        <a class="nav-link" href="#authentication">Authentication</a>
+                        <a class="nav-link" href="#endpoints">Endpoints</a>
+                        <nav class="nav nav-pills flex-column ms-3">
+                            <a class="nav-link" href="#generate-pdf">Generate PDF</a>
+                            <a class="nav-link" href="#get-templates">Get Templates</a>
+                            <a class="nav-link" href="#preview">Preview</a>
+                            <a class="nav-link" href="#health">Health Check</a>
+                        </nav>
+                        <a class="nav-link" href="#examples">Examples</a>
+                        <a class="nav-link" href="#error-codes">Error Codes</a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <div class="content">
+                    <!-- Overview -->
+                    <section id="overview" class="content-section">
+                        <h1>תיעוד API</h1>
+                        <p class="lead">מחולל החשבוניות מספק API בסגנון REST ליצירת חשבוניות וקבלות בפורמט PDF.</p>
+                        
+                        <div class="alert alert-info">
+                            <h5 class="alert-heading">כתובת בסיס</h5>
+                            <code>http://localhost:3000/api</code>
+                        </div>
+
+                        <h3>Features</h3>
+                        <ul>
+                            <li>Generate PDF invoices and receipts</li>
+                            <li>Multiple template types (receipt, tax invoice, exempt business receipt)</li>
+                            <li>Custom business branding</li>
+                            <li>Handlebars template engine</li>
+                            <li>Rate limiting for API protection</li>
+                            <li>n8n workflow integration</li>
+                        </ul>
+                    </section>
+
+                    <!-- Authentication -->
+                    <section id="authentication" class="content-section">
+                        <h2>אימות</h2>
+                        <p>כעת ה־API אינו דורש אימות. בסביבות פרודקשן מומלץ להוסיף אימות מפתח API או מנגנוני אבטחה אחרים.</p>
+                        
+                        <div class="alert alert-warning">
+                            <strong>Rate Limiting:</strong> The API is rate-limited to 100 requests per 15 minutes per IP address.
+                        </div>
+                    </section>
+
+                    <!-- Endpoints -->
+                    <section id="endpoints" class="content-section">
+                        <h2>נקודות קצה</h2>
+
+                        <!-- Generate PDF -->
+                        <div id="generate-pdf" class="card endpoint-card post mb-4">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <span class="badge bg-success me-2">POST</span>
+                                     /api/generate-pdf
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p>יצירת חשבונית/קבלה כקובץ PDF.</p>
+                                
+                                <h5>גוף בקשה</h5>
+                                <pre><code class="language-json">{
+  "templateType": "receipt",
+  "customer": {
+    "name": "John Doe",
+    "address": "123 Main St",
+    "city": "City",
+    "state": "State",
+    "postalCode": "12345",
+    "email": "john@example.com",
+    "phone": "+1-555-123-4567"
+  },
+  "business": {
+    "name": "Your Business",
+    "address": "456 Business Ave",
+    "city": "Business City",
+    "state": "State",
+    "postalCode": "67890",
+    "phone": "+1-555-987-6543",
+    "email": "info@business.com",
+    "website": "www.business.com",
+    "abn": "12345678901"
+  },
+  "items": [
+    {
+      "description": "Product or Service",
+      "quantity": 2,
+      "rate": 50.00,
+      "amount": 100.00
+    }
+  ],
+  "subtotal": 100.00,
+  "taxRate": 10,
+  "taxAmount": 10.00,
+  "total": 110.00,
+  "currency": "$",
+  "paymentTerms": "30 days",
+  "paymentMethod": "Bank Transfer",
+  "notes": "Thank you for your business!"
+}</code></pre>
+
+                                <h5>שדות חובה</h5>
+                                <ul>
+                                    <li><code>templateType</code> - Template to use (receipt, tax_invoice, exempt_business_receipt)</li>
+                                    <li><code>customer.name</code> - Customer name</li>
+                                    <li><code>items</code> - Array of invoice items (minimum 1 item)</li>
+                                </ul>
+
+                                <h5>תגובה</h5>
+                                <p>מחזיר קובץ PDF עם כותרות מתאימות להורדה.</p>
+                            </div>
+                        </div>
+
+                        <!-- Get Templates -->
+                        <div id="get-templates" class="card endpoint-card get mb-4">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <span class="badge bg-primary me-2">GET</span>
+                                    /api/templates
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p>קבלת רשימת תבניות זמינות.</p>
+                                
+                                <h5>תגובה</h5>
+                                <pre><code class="language-json">{
+  "success": true,
+  "templates": [
+    "receipt",
+    "tax_invoice", 
+    "exempt_business_receipt"
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div id="preview" class="card endpoint-card post mb-4">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <span class="badge bg-success me-2">POST</span>
+                                    /api/preview
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p>תצוגה מקדימה של התבנית כ־HTML (יעיל לניפוי באגים ופיתוח תבניות).</p>
+                                
+                                <h5>גוף בקשה</h5>
+                                <p>זהה ל־generate-pdf אך מחזיר HTML במקום PDF.</p>
+                                
+                                <h5>Response</h5>
+                                <p>Returns rendered HTML content with Content-Type: text/html.</p>
+                            </div>
+                        </div>
+
+                        <!-- Health Check -->
+                        <div id="health" class="card endpoint-card get mb-4">
+                            <div class="card-header">
+                                <h3 class="mb-0">
+                                    <span class="badge bg-primary me-2">GET</span>
+                                    /api/health
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p>נקודת קצה לבדיקת תקינות וזמינות השירות.</p>
+                                
+                                <h5>תגובה</h5>
+                                <pre><code class="language-json">{
+  "success": true,
+  "status": "OK",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "service": "Invoice PDF Generator"
+}</code></pre>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Examples -->
+                    <section id="examples" class="content-section">
+                        <h2>Examples</h2>
+
+                        <h3>cURL Example</h3>
+                        <pre><code class="language-bash">curl -X POST http://localhost:3000/api/generate-pdf \
+  -H "Content-Type: application/json" \
+  -d '{
+    "templateType": "receipt",
+    "customer": {
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "items": [{
+      "description": "Consulting Service",
+      "quantity": 1,
+      "rate": 150.00,
+      "amount": 150.00
+    }],
+    "total": 150.00
+  }' \
+  --output invoice.pdf</code></pre>
+
+                        <h3>n8n Workflow Example</h3>
+                        <p>Use the HTTP Request node in n8n:</p>
+                        <ul>
+                            <li><strong>Method:</strong> POST</li>
+                            <li><strong>URL:</strong> http://localhost:3000/api/generate-pdf</li>
+                            <li><strong>Body:</strong> JSON with invoice data</li>
+                            <li><strong>Response Format:</strong> File</li>
+                        </ul>
+                    </section>
+
+                    <!-- Error Codes -->
+                    <section id="error-codes" class="content-section">
+                        <h2>Error Codes</h2>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Status</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>400</td>
+                                        <td>Bad Request</td>
+                                        <td>Missing required fields or invalid data</td>
+                                    </tr>
+                                    <tr>
+                                        <td>404</td>
+                                        <td>Not Found</td>
+                                        <td>Template not found or endpoint doesn't exist</td>
+                                    </tr>
+                                    <tr>
+                                        <td>429</td>
+                                        <td>Too Many Requests</td>
+                                        <td>Rate limit exceeded</td>
+                                    </tr>
+                                    <tr>
+                                        <td>500</td>
+                                        <td>Internal Server Error</td>
+                                        <td>PDF generation failed or server error</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <div class="text-center text-muted py-3">דף זה נבנה ע''י BrainboxAI</div>
+</body>
+</html>

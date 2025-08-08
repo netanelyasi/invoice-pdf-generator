@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .template-card {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .template-card:hover {
+            transform: translateY(-5px);
+        }
+        .template-preview {
+            height: 200px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .coming-soon {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">📄 מחולל חשבוניות</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">בית</a>
+                <a class="nav-link" href="/docs">תיעוד API</a>
+                <a class="nav-link active" href="/templates">תבניות</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h1 class="fw-bold">ניהול תבניות</h1>
+                <p class="lead text-muted">ניהול ותצוגה מקדימה של תבניות החשבוניות</p>
+            </div>
+        </div>
+
+        <!-- Available Templates -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="mb-4">תבניות זמינות</h2>
+            </div>
+            
+            <!-- Receipt Template -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card template-card h-100" onclick="previewTemplate('receipt')">
+                    <div class="card-body">
+                        <div class="template-preview">
+                            <div class="text-center">
+                                <i class="bi bi-receipt display-1 text-primary"></i>
+                                <h5 class="mt-2">Receipt</h5>
+                            </div>
+                        </div>
+                        <h5 class="card-title">קבלה סטנדרטית</h5>
+                        <p class="card-text">תבנית קבלה מקצועית לעסק. עיצוב נקי עם אפשרות למיתוג החברה.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">Active</span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); openEditor('receipt')">Edit</button>
+                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); previewTemplate('receipt')">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax Invoice Template -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card template-card h-100" onclick="previewTemplate('tax_invoice')">
+                    <div class="card-body">
+                        <div class="template-preview">
+                            <div class="text-center">
+                                <i class="bi bi-file-earmark-text display-1 text-danger"></i>
+                                <h5 class="mt-2">Tax Invoice</h5>
+                            </div>
+                        </div>
+                        <h5 class="card-title">חשבונית מס</h5>
+                        <p class="card-text">תבנית חשבונית מס תואמת מיסים. כוללת חישובי מס, תאריכי יעד ומידע תאימות.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">Active</span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); openEditor('tax_invoice')">Edit</button>
+                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); previewTemplate('tax_invoice')">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exempt Business Receipt Template -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card template-card h-100" onclick="previewTemplate('exempt_business_receipt')">
+                    <div class="card-body">
+                        <div class="template-preview">
+                            <div class="text-center">
+                                <i class="bi bi-shield-check display-1 text-success"></i>
+                                <h5 class="mt-2">Exempt Receipt</h5>
+                            </div>
+                        </div>
+                        <h5 class="card-title">קבלה לעסק פטור</h5>
+                        <p class="card-text">קבלה לעסק/עסקה הפטורה ממס, עם הדגשה ברורה של הסטטוס ותצוגה מקצועית.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">Active</span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); openEditor('exempt_business_receipt')">Edit</button>
+                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); previewTemplate('exempt_business_receipt')">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Template Testing Tool -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                         <h3 class="mb-0">בדיקת יצירת תבנית</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="testForm">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="templateSelect" class="form-label">סוג תבנית</label>
+                                        <select class="form-select" id="templateSelect" required>
+                                            <option value="">בחרו תבנית...</option>
+                                            <option value="receipt">קבלה</option>
+                                            <option value="tax_invoice">חשבונית מס</option>
+                                            <option value="exempt_business_receipt">קבלה לעסק פטור</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="customerName" class="form-label">שם הלקוח</label>
+                                        <input type="text" class="form-control" id="customerName" value="John Doe" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="totalAmount" class="form-label">סכום כולל</label>
+                                        <input type="number" class="form-control" id="totalAmount" value="150.00" step="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="itemDescription" class="form-label">תיאור פריט</label>
+                                        <input type="text" class="form-control" id="itemDescription" value="Professional Service" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-secondary" onclick="previewTestTemplate()">
+                                    <i class="bi bi-eye me-1"></i>תצוגת HTML
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="generateTestPDF()">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>יצירת PDF
+                                </button>
+                                <a class="btn btn-outline-secondary" href="/templates">חזרה לרשימה</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coming Soon Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2 class="mb-4">בקרוב</h2>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card template-card h-100 coming-soon">
+                    <div class="card-body">
+                        <div class="template-preview">
+                            <div class="text-center">
+                                <i class="bi bi-tools display-1 text-muted"></i>
+                                <h5 class="mt-2">עורך תבניות</h5>
+                            </div>
+                        </div>
+                        <h5 class="card-title">עורך תבניות מותאם</h5>
+                        <p class="card-text">עורך ויזואלי ליצירת פריסות חשבוניות בהתאמה אישית בגרירה ושחרור.</p>
+                        <span class="badge bg-warning text-dark">בקרוב</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card template-card h-100 coming-soon">
+                    <div class="card-body">
+                        <div class="template-preview">
+                            <div class="text-center">
+                                <i class="bi bi-palette display-1 text-muted"></i>
+                                <h5 class="mt-2">מנהל ערכות נושא</h5>
+                            </div>
+                        </div>
+                        <h5 class="card-title">מנהל ערכות נושא</h5>
+                        <p class="card-text">ניהול סכמות צבעים, פונטים ומיתוג בכל התבניות מממשק אחד.</p>
+                        <span class="badge bg-warning text-dark">בקרוב</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card template-card h-100 coming-soon">
+                    <div class="card-body">
+                        <div class="template-preview">
+                            <div class="text-center">
+                                <i class="bi bi-upload display-1 text-muted"></i>
+                                <h5 class="mt-2">ייבוא תבניות</h5>
+                            </div>
+                        </div>
+                        <h5 class="card-title">ייבוא/ייצוא תבניות</h5>
+                        <p class="card-text">ייבוא תבניות מותאמות או ייצוא קיימות לגיבוי ושיתוף בין סביבות.</p>
+                        <span class="badge bg-warning text-dark">בקרוב</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-1">&copy; 2024 מחולל חשבוניות PDF. ממשק ניהול תבניות.</p>
+            <div class="text-white-50">דף זה נבנה ע''י BrainboxAI</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <script>
+        const previewTemplate = (templateType) => {
+            const sampleData = {
+                templateType,
+                customer: {
+                    name: "John Doe",
+                    email: "john@example.com",
+                    address: "123 Main Street",
+                    city: "Sample City",
+                    state: "State",
+                    postalCode: "12345"
+                },
+                business: {
+                    name: "Your Business Name",
+                    address: "456 Business Ave",
+                    city: "Business City",
+                    state: "State",
+                    postalCode: "67890",
+                    phone: "+1-555-123-4567",
+                    email: "info@yourbusiness.com"
+                },
+                items: [{
+                    description: "Sample Product/Service",
+                    quantity: 1,
+                    rate: 150.00,
+                    amount: 150.00
+                }],
+                subtotal: 150.00,
+                taxRate: templateType === 'exempt_business_receipt' ? 0 : 10,
+                taxAmount: templateType === 'exempt_business_receipt' ? 0 : 15.00,
+                total: templateType === 'exempt_business_receipt' ? 150.00 : 165.00,
+                paymentTerms: "30 days",
+                notes: "Thank you for your business!"
+            };
+
+            fetch('/api/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(sampleData)
+            })
+            .then(response => response.text())
+            .then(html => {
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(html);
+                newWindow.document.close();
+            })
+            .catch(error => {
+                console.error('Preview error:', error);
+                alert('Preview failed. Please check the console for details.');
+            });
+        };
+
+        function previewTestTemplate() {
+            const templateType = document.getElementById('templateSelect').value;
+            const customerName = document.getElementById('customerName').value;
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+            const itemDescription = document.getElementById('itemDescription').value;
+
+            if (!templateType || !customerName || !totalAmount || !itemDescription) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const testData = {
+                templateType: templateType,
+                customer: {
+                    name: customerName,
+                    email: "test@example.com"
+                },
+                items: [{
+                    description: itemDescription,
+                    quantity: 1,
+                    rate: totalAmount,
+                    amount: totalAmount
+                }],
+                total: totalAmount
+            };
+
+            fetch('/api/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => response.text())
+            .then(html => {
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(html);
+                newWindow.document.close();
+            })
+            .catch(error => {
+                console.error('Preview error:', error);
+                alert('Preview failed. Please check the console for details.');
+            });
+        }
+
+        function generateTestPDF() {
+            const templateType = document.getElementById('templateSelect').value;
+            const customerName = document.getElementById('customerName').value;
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+            const itemDescription = document.getElementById('itemDescription').value;
+
+            if (!templateType || !customerName || !totalAmount || !itemDescription) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const testData = {
+                templateType: templateType,
+                customer: {
+                    name: customerName,
+                    email: "test@example.com"
+                },
+                items: [{
+                    description: itemDescription,
+                    quantity: 1,
+                    rate: totalAmount,
+                    amount: totalAmount
+                }],
+                total: totalAmount
+            };
+
+            fetch('/api/generate-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `test-${templateType}-${Date.now()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('PDF generation error:', error);
+                alert('PDF generation failed. Please check the console for details.');
+            });
+        }
+
+        const openEditor = (name) => {
+            window.location.href = `/templates/edit/${encodeURIComponent(name)}`;
+        };
+    </script>
+</body>
+</html>
